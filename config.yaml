@@ -1,0 +1,5 @@
+vanilla-gan:
+  latent_dim: 20
+  original_dim: 2
+  batch_size: 64
+  noise_dim: 2
