@@ -5,13 +5,15 @@ import tensorflow as tf
 class Generator(tfkl.Layer):
     def __init__(self, latent_dim: int, original_dim: int):
         super(Generator, self).__init__()
-        self.layer1 = tfkl.Dense(latent_dim, activation="relu")
-        self.layer2 = tfkl.Dense(latent_dim, activation="relu")
+        self.layer1 = tfkl.Dense(latent_dim)
+        self.layer1_lrl = tfkl.LeakyReLU()
+        self.layer2 = tfkl.Dense(latent_dim)
+        self.layer2_lrl = tfkl.LeakyReLU()
         self.out = tfkl.Dense(original_dim)
 
     def call(self, x):
-        x = self.layer1(x)
-        x = self.layer2(x)
+        x = self.layer1_lrl(self.layer1(x))
+        x = self.layer2_lrl(self.layer2(x))
         output = self.out(x)
 
         return output
@@ -20,14 +22,16 @@ class Generator(tfkl.Layer):
 class Discriminator(tfkl.Layer):
     def __init__(self, latent_dim: int, original_dim: int):
         super(Discriminator, self).__init__()
-        self.layer1 = tfkl.Dense(latent_dim, activation="relu")
-        self.layer2 = tfkl.Dense(latent_dim, activation="relu")
+        self.layer1 = tfkl.Dense(latent_dim)
+        self.layer1_lrl = tfkl.LeakyReLU()
+        self.layer2 = tfkl.Dense(latent_dim)
+        self.layer2_lrl = tfkl.LeakyReLU()
         self.layer3 = tfkl.Dense(original_dim)
         self.out = tfkl.Dense(1)
 
     def call(self, x):
-        x = self.layer1(x)
-        x = self.layer2(x)
+        x = self.layer1_lrl(self.layer1(x))
+        x = self.layer2_lrl(self.layer2(x))
         x = self.layer3(x)
         output = self.out(x)
 
@@ -63,8 +67,7 @@ class GAN(tf.keras.Model):
     def generator_loss(self, generated_output):
         return self.cross_entropy(tf.ones_like(generated_output), generated_output)
 
-    def discriminator_train_step(self, x):
-        noise = tf.random.normal([self.config["batch_size"], self.config["noise_dim"]])
+    def discriminator_train_step(self, x, noise):
 
         with tf.GradientTape() as discriminator_tape:
             generated_images = self.generator(noise, training=True)
@@ -87,8 +90,7 @@ class GAN(tf.keras.Model):
         generated_sample = self.generator(noise, training=True)
         return generated_sample
 
-    def generator_train_step(self):
-        noise = tf.random.normal([self.config["batch_size"], self.config["noise_dim"]])
+    def generator_train_step(self,  noise):
 
         with tf.GradientTape() as generator_tape:
             generated_samples = self.generator(noise, training=True)
@@ -105,12 +107,11 @@ class GAN(tf.keras.Model):
 
         return generator_loss
 
-    def call(self, x=None):
-        if x is not None:
-            discriminator_loss = self.discriminator_train_step(x)
-            generator_loss = self.generator_train_step()
 
-            return generator_loss, discriminator_loss
-        else:
-            generator_loss = self.generator_train_step()
-            return generator_loss
+    def call(self, x):
+        noise = tf.random.normal([self.config["batch_size"], self.config["noise_dim"]])
+
+        discriminator_loss = self.discriminator_train_step(x, noise)
+        generator_loss = self.generator_train_step(noise)
+
+        return discriminator_loss, generator_loss

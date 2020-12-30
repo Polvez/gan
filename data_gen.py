@@ -1,4 +1,5 @@
 import numpy as np
+import tensorflow as tf
 
 
 def generate_sin_data(n: int = 10000) -> np.array:
@@ -8,17 +9,12 @@ def generate_sin_data(n: int = 10000) -> np.array:
     return np.array([[i, j] for i, j in zip(x, y)])
 
 
-def get_y(x):
-    return 10 + x*x
+def generate_mnist_data(config):
+    (x_train, _), (_, _) = tf.keras.datasets.mnist.load_data()
 
+    x_train = x_train.reshape(-1, 784).astype("float32")
+    x_train = (x_train - 127.5) / 127.5
+    train_dataset = tf.data.Dataset.from_tensor_slices(x_train)
+    train_dataset = train_dataset.shuffle(buffer_size=1024).batch(config["vanilla-gan"]["batch_size"])
 
-def sample_data(n=10000, scale=100):
-    data = []
-
-    x = scale*(np.random.random_sample((n,))-0.5)
-
-    for i in range(n):
-        yi = get_y(x[i])
-        data.append([x[i], yi])
-
-    return np.array(data)
+    return train_dataset
