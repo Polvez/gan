@@ -10,16 +10,18 @@ def display_images(out, label=None, count=False):
     plt.figure(figsize=(18, 6))
     for i in range(4):
         plt.subplot(1, 4, i + 1)
-        plt.imshow(out_pic[i + 4],  cmap='gray')
+        plt.imshow(out_pic[i + 4], cmap="gray")
         plt.axis("off")
         if count:
             plt.title(str(4 + i), color="w")
     plt.show()
 
+
 def evaluate_gan_is(dataset):
-    classifier = tf.keras.Sequential([
-        hub.KerasLayer("https://tfhub.dev/tensorflow/tfgan/eval/mnist/logits/1")
-    ])
+    # Load pre-trained MNIST model
+    classifier = tf.keras.Sequential(
+        [hub.KerasLayer("https://tfhub.dev/tensorflow/tfgan/eval/mnist/logits/1")]
+    )
 
     def get_inception_score(classifier, images):
         preds = classifier.predict(images)
@@ -30,6 +32,6 @@ def evaluate_gan_is(dataset):
         score = np.exp(kl)
         return score
 
-    scores = [get_inception_score(classifier, batch) for batch in dataset ]
+    scores = [get_inception_score(classifier, batch) for batch in dataset]
 
     return np.mean(scores), np.std(scores)

@@ -8,3 +8,4 @@ dc-gan:
   noise_dim: 100
 
 gan-type: "dc-gan" # Can be ["vanilla-gan", "dc-gan"]
+epochs: 200
