@@ -5,15 +5,18 @@ import tensorflow as tf
 class Generator(tfkl.Layer):
     def __init__(self, latent_dim: int, original_dim: int):
         super(Generator, self).__init__()
-        self.layer1 = tfkl.Dense(latent_dim)
+        self.layer1 = tfkl.Dense(256)
         self.layer1_lrl = tfkl.LeakyReLU()
-        self.layer2 = tfkl.Dense(latent_dim * 2)
+        self.layer2 = tfkl.Dense(256 * 2)
         self.layer2_lrl = tfkl.LeakyReLU()
-        self.out = tfkl.Dense(original_dim)
+        self.layer3 = tfkl.Dense(256 * 2 * 2)
+        self.layer3_lrl = tfkl.LeakyReLU()
+        self.out = tfkl.Dense(original_dim, activation="tanh")
 
     def call(self, x):
         x = self.layer1_lrl(self.layer1(x))
         x = self.layer2_lrl(self.layer2(x))
+        x = self.layer3_lrl(self.layer3(x))
         output = self.out(x)
 
         return output
@@ -94,17 +97,18 @@ class DCDiscriminator(tfkl.Layer):
 class Discriminator(tfkl.Layer):
     def __init__(self, latent_dim: int, original_dim: int):
         super(Discriminator, self).__init__()
-        self.layer1 = tfkl.Dense(latent_dim)
+        self.layer1 = tfkl.Dense(256 * 2 * 2)
         self.layer1_lrl = tfkl.LeakyReLU()
-        self.layer2 = tfkl.Dense(latent_dim)
+        self.layer2 = tfkl.Dense(256 * 2)
         self.layer2_lrl = tfkl.LeakyReLU()
-        self.layer3 = tfkl.Dense(original_dim)
-        self.out = tfkl.Dense(1)
+        self.layer3 = tfkl.Dense(256)
+        self.layer3_lrl = tfkl.LeakyReLU()
+        self.out = tfkl.Dense(1, activation="sigmoid")
 
     def call(self, x):
         x = self.layer1_lrl(self.layer1(x))
         x = self.layer2_lrl(self.layer2(x))
-        x = self.layer3(x)
+        x = self.layer3_lrl(self.layer3(x))
         output = self.out(x)
 
         return output
